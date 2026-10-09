@@ -16,33 +16,28 @@
 
 namespace {
 
-constexpr SIZE_T kPatchRva = 0x2957F27;
-constexpr SIZE_T kProcessFileRva = 0x3C3FAA0;
-constexpr SIZE_T kPhysicsBuilderVtableRva = 0x6F34CB0;
-constexpr SIZE_T kDepotGlobalRva = 0xBF33600;
-constexpr SIZE_T kMainThreadIdRva = 0xBF34160;
-constexpr SIZE_T kProjectContextGlobalRva = 0xBF34780;
-constexpr SIZE_T kFindFileUseLinksRva = 0x3A18BD0;
-constexpr SIZE_T kGetAbsolutePathRva = 0x3A37AB0;
-constexpr SIZE_T kTStringDestructorRva = 0x39DFEC0;
-constexpr SIZE_T kResourceReloadRva = 0x39FCBA0;
-constexpr SIZE_T kDiskFileVtableRva = 0x6EA5DD8;
-constexpr SIZE_T kCachedDirectoryVtableRva = 0x6EB4EA8;
-constexpr SIZE_T kPhysicalDirectoryVtableRva = 0x6EF85F0;
-constexpr SIZE_T kVirtualDirectoryVtableRva = 0x6ED35B0;
-constexpr SIZE_T kApexClothVtableRva = 0x6BEF270;
+constexpr SIZE_T kPatchRva = 0x294C9D7;
+constexpr SIZE_T kProcessFileRva = 0x3C347D0;
+constexpr SIZE_T kPhysicsBuilderVtableRva = 0x6F41CB0;
+constexpr SIZE_T kDepotGlobalRva = 0xBF47020;
+constexpr SIZE_T kMainThreadIdRva = 0xBF47B80;
+constexpr SIZE_T kProjectContextGlobalRva = 0xBF481A0;
+constexpr SIZE_T kFindFileUseLinksRva = 0x3A0D8E0;
+constexpr SIZE_T kGetAbsolutePathRva = 0x3A2C7C0;
+constexpr SIZE_T kTStringDestructorRva = 0x39D4BD0;
+constexpr SIZE_T kResourceReloadRva = 0x39F18B0;
+constexpr SIZE_T kDiskFileVtableRva = 0x6EB2D98;
+constexpr SIZE_T kCachedDirectoryVtableRva = 0x6EC1E68;
+constexpr SIZE_T kPhysicalDirectoryVtableRva = 0x6F055F0;
+constexpr SIZE_T kVirtualDirectoryVtableRva = 0x6EE0570;
+constexpr SIZE_T kApexClothVtableRva = 0x6BFC0F0;
 constexpr std::array<UCHAR, 15> kProcessFilePrologue = {
     0x48, 0x89, 0x5C, 0x24, 0x08,
     0x48, 0x89, 0x6C, 0x24, 0x10,
     0x48, 0x89, 0x74, 0x24, 0x18
 };
-constexpr LONGLONG kExpectedEditorSize = 198202320;
-constexpr std::array<UCHAR, 32> kExpectedSha256 = {
-    0x42, 0x2C, 0xEB, 0xBC, 0xEF, 0xDE, 0x36, 0x37,
-    0x59, 0x08, 0xCD, 0xD7, 0x8D, 0x09, 0x7A, 0x46,
-    0x72, 0xEF, 0x26, 0xF2, 0x84, 0x94, 0xB2, 0xF1,
-    0xDC, 0x09, 0xB6, 0x6B, 0x7A, 0x72, 0xAA, 0x46
-};
+constexpr LONGLONG kExpectedEditorSize = 198286800;
+constexpr std::array<UCHAR, 32> kExpectedSha256 = { 0xED, 0x2A, 0x89, 0xF9, 0xDC, 0x05, 0xA7, 0xF7, 0x5B, 0xA5, 0x6C, 0xAE, 0xE0, 0xEB, 0x53, 0x20, 0xCA, 0x90, 0x32, 0x5D, 0x03, 0xDD, 0xBB, 0xBD, 0x85, 0x6D, 0xD1, 0x94, 0x1D, 0x4D, 0x2B, 0x0F };
 
 using DirectInput8CreateFn = HRESULT(WINAPI*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 using DllCanUnloadNowFn = HRESULT(WINAPI*)();
