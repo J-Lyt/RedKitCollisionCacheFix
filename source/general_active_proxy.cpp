@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <bcrypt.h>
-#include <dinput.h>
 #include "vtable_slot_hook.h"
 #include "source_apb_validator.h"
 
@@ -39,12 +38,6 @@ constexpr std::array<UCHAR, 15> kProcessFilePrologue = {
 constexpr LONGLONG kExpectedEditorSize = 198286800;
 constexpr std::array<UCHAR, 32> kExpectedSha256 = { 0xED, 0x2A, 0x89, 0xF9, 0xDC, 0x05, 0xA7, 0xF7, 0x5B, 0xA5, 0x6C, 0xAE, 0xE0, 0xEB, 0x53, 0x20, 0xCA, 0x90, 0x32, 0x5D, 0x03, 0xDD, 0xBB, 0xBD, 0x85, 0x6D, 0xD1, 0x94, 0x1D, 0x4D, 0x2B, 0x0F };
 
-using DirectInput8CreateFn = HRESULT(WINAPI*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
-using DllCanUnloadNowFn = HRESULT(WINAPI*)();
-using DllGetClassObjectFn = HRESULT(WINAPI*)(REFCLSID, REFIID, LPVOID*);
-using DllRegisterServerFn = HRESULT(WINAPI*)();
-using DllUnregisterServerFn = HRESULT(WINAPI*)();
-using GetdfDIJoystickFn = LPCDIDATAFORMAT(WINAPI*)();
 using ProcessFileFn = bool(WINAPI*)(void*, void*, void*, void*);
 using FindFileUseLinksFn = void*(WINAPI*)(void*, const void*, unsigned int);
 using GetAbsolutePathFn = void*(WINAPI*)(void*, void*);
@@ -52,8 +45,6 @@ using TStringDestructorFn = void(WINAPI*)(void*);
 using ResourceReloadFn = bool(WINAPI*)(void*, bool);
 
 HMODULE g_self = nullptr;
-HMODULE g_real = nullptr;
-INIT_ONCE g_realOnce = INIT_ONCE_STATIC_INIT;
 INIT_ONCE g_traceOnce = INIT_ONCE_STATIC_INIT;
 void* g_processFileTrampoline = nullptr;
 UCHAR* g_editorBase = nullptr;
@@ -105,45 +96,6 @@ void Log(const wchar_t* format, ...) {
         }
     }
     CloseHandle(file);
-}
-
-bool GetSystemDinputPath(std::wstring& path) {
-    wchar_t systemDirectory[MAX_PATH] = {};
-    const UINT count = GetSystemDirectoryW(systemDirectory, _countof(systemDirectory));
-    if (count == 0 || count >= _countof(systemDirectory)) return false;
-    path.assign(systemDirectory);
-    path += L"\\dinput8.dll";
-    return true;
-}
-
-BOOL CALLBACK InitializeReal(PINIT_ONCE, PVOID, PVOID*) {
-    std::wstring path;
-    if (!GetSystemDinputPath(path)) {
-        Log(L"Could not determine the System32 dinput8.dll path; forwarding unavailable.");
-        return TRUE;
-    }
-    HMODULE loaded = LoadLibraryExW(path.c_str(), nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (!loaded) {
-        Log(L"Could not load %s (Win32 %lu); forwarding unavailable.",
-            path.c_str(), GetLastError());
-        return TRUE;
-    }
-    wchar_t loadedPath[MAX_PATH] = {};
-    const DWORD length = GetModuleFileNameW(loaded, loadedPath, _countof(loadedPath));
-    if (loaded == g_self || length == 0 || length >= _countof(loadedPath) ||
-        _wcsicmp(loadedPath, path.c_str()) != 0) {
-        Log(L"System32 load resolved to a different module (%s); forwarding unavailable.",
-            length > 0 && length < _countof(loadedPath) ? loadedPath : L"unknown");
-        return TRUE;
-    }
-    g_real = loaded;
-    Log(L"Loaded real %s; mode=general-active-vtable.", path.c_str());
-    return TRUE;
-}
-
-HMODULE RealDinput() {
-    if (!InitOnceExecuteOnce(&g_realOnce, InitializeReal, nullptr, nullptr)) return nullptr;
-    return g_real;
 }
 
 bool ComputeSha256(const wchar_t* path, std::array<UCHAR, 32>& digest) {
@@ -1138,7 +1090,7 @@ BOOL CALLBACK InitializeTrace(PINIT_ONCE, PVOID, PVOID*) {
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                                 GET_MODULE_HANDLE_EX_FLAG_PIN,
                             reinterpret_cast<LPCWSTR>(g_self), &pinned)) {
-        Log(L"Could not pin proxy module (Win32 %lu); trace skipped.", GetLastError());
+        Log(L"Could not pin ASI module (Win32 %lu); trace skipped.", GetLastError());
         return TRUE;
     }
     try { InstallTrace(); }
@@ -1150,12 +1102,6 @@ void MaybeTrace() {
     InitOnceExecuteOnce(&g_traceOnce, InitializeTrace, nullptr, nullptr);
 }
 
-template <typename T>
-T RealExport(const char* name) {
-    HMODULE module = RealDinput();
-    return module ? reinterpret_cast<T>(GetProcAddress(module, name)) : nullptr;
-}
-
 }  // namespace
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE self, DWORD reason, LPVOID) {
@@ -1165,37 +1111,9 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE self, DWORD reason, LPVOID) {
     return TRUE;
 }
 
-extern "C" HRESULT WINAPI DirectInput8Create(HINSTANCE instance, DWORD version,
-                                                REFIID iid, LPVOID* output,
-                                                LPUNKNOWN outer) {
-    const auto real = RealExport<DirectInput8CreateFn>("DirectInput8Create");
-    if (!real) return E_FAIL;
+// Ultimate ASI Loader calls this after LoadLibrary returns and the loader lock
+// has been released. DllMain deliberately does not install a hook.
+extern "C" __declspec(dllexport) void InitializeASI() {
+    Log(L"ASI InitializeASI called; mode=general-active-vtable.");
     MaybeTrace();
-    return real(instance, version, iid, output, outer);
-}
-
-extern "C" HRESULT WINAPI DllCanUnloadNow() {
-    const auto real = RealExport<DllCanUnloadNowFn>("DllCanUnloadNow");
-    return real ? real() : E_FAIL;
-}
-
-extern "C" HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid,
-                                               LPVOID* output) {
-    const auto real = RealExport<DllGetClassObjectFn>("DllGetClassObject");
-    return real ? real(clsid, iid, output) : E_FAIL;
-}
-
-extern "C" HRESULT WINAPI DllRegisterServer() {
-    const auto real = RealExport<DllRegisterServerFn>("DllRegisterServer");
-    return real ? real() : E_FAIL;
-}
-
-extern "C" HRESULT WINAPI DllUnregisterServer() {
-    const auto real = RealExport<DllUnregisterServerFn>("DllUnregisterServer");
-    return real ? real() : E_FAIL;
-}
-
-extern "C" LPCDIDATAFORMAT WINAPI GetdfDIJoystick() {
-    const auto real = RealExport<GetdfDIJoystickFn>("GetdfDIJoystick");
-    return real ? real() : nullptr;
 }
