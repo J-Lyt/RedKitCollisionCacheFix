@@ -15,28 +15,28 @@
 
 namespace {
 
-constexpr SIZE_T kPatchRva = 0x294C9D7;
-constexpr SIZE_T kProcessFileRva = 0x3C347D0;
-constexpr SIZE_T kPhysicsBuilderVtableRva = 0x6F41CB0;
-constexpr SIZE_T kDepotGlobalRva = 0xBF47020;
-constexpr SIZE_T kMainThreadIdRva = 0xBF47B80;
-constexpr SIZE_T kProjectContextGlobalRva = 0xBF481A0;
-constexpr SIZE_T kFindFileUseLinksRva = 0x3A0D8E0;
-constexpr SIZE_T kGetAbsolutePathRva = 0x3A2C7C0;
-constexpr SIZE_T kTStringDestructorRva = 0x39D4BD0;
-constexpr SIZE_T kResourceReloadRva = 0x39F18B0;
-constexpr SIZE_T kDiskFileVtableRva = 0x6EB2D98;
-constexpr SIZE_T kCachedDirectoryVtableRva = 0x6EC1E68;
-constexpr SIZE_T kPhysicalDirectoryVtableRva = 0x6F055F0;
-constexpr SIZE_T kVirtualDirectoryVtableRva = 0x6EE0570;
-constexpr SIZE_T kApexClothVtableRva = 0x6BFC0F0;
+constexpr SIZE_T kPatchRva = 0x2935477;
+constexpr SIZE_T kProcessFileRva = 0x3C1D270;
+constexpr SIZE_T kPhysicsBuilderVtableRva = 0x6F3B130;
+constexpr SIZE_T kDepotGlobalRva = 0xBF3D010;
+constexpr SIZE_T kMainThreadIdRva = 0xBF3DB70;
+constexpr SIZE_T kProjectContextGlobalRva = 0xBF3E190;
+constexpr SIZE_T kFindFileUseLinksRva = 0x39F6380;
+constexpr SIZE_T kGetAbsolutePathRva = 0x3A15260;
+constexpr SIZE_T kTStringDestructorRva = 0x39BD670;
+constexpr SIZE_T kResourceReloadRva = 0x39DA350;
+constexpr SIZE_T kDiskFileVtableRva = 0x6EAC240;
+constexpr SIZE_T kCachedDirectoryVtableRva = 0x6EBB2E8;
+constexpr SIZE_T kPhysicalDirectoryVtableRva = 0x6EFEA50;
+constexpr SIZE_T kVirtualDirectoryVtableRva = 0x6ED99E0;
+constexpr SIZE_T kApexClothVtableRva = 0x6BF5510;
 constexpr std::array<UCHAR, 15> kProcessFilePrologue = {
     0x48, 0x89, 0x5C, 0x24, 0x08,
     0x48, 0x89, 0x6C, 0x24, 0x10,
     0x48, 0x89, 0x74, 0x24, 0x18
 };
-constexpr LONGLONG kExpectedEditorSize = 198286800;
-constexpr std::array<UCHAR, 32> kExpectedSha256 = { 0xED, 0x2A, 0x89, 0xF9, 0xDC, 0x05, 0xA7, 0xF7, 0x5B, 0xA5, 0x6C, 0xAE, 0xE0, 0xEB, 0x53, 0x20, 0xCA, 0x90, 0x32, 0x5D, 0x03, 0xDD, 0xBB, 0xBD, 0x85, 0x6D, 0xD1, 0x94, 0x1D, 0x4D, 0x2B, 0x0F };
+constexpr LONGLONG kExpectedEditorSize = 198239184;
+constexpr std::array<UCHAR, 32> kExpectedSha256 = { 0x37, 0xA8, 0xB2, 0x54, 0xDA, 0x91, 0x3C, 0x65, 0x70, 0x64, 0x47, 0xF4, 0x79, 0x78, 0x06, 0x51, 0xB7, 0x06, 0xC1, 0xA8, 0xB4, 0xED, 0x3E, 0xF7, 0x58, 0xAA, 0xAF, 0xC0, 0x04, 0x86, 0x69, 0x49 };
 
 using ProcessFileFn = bool(WINAPI*)(void*, void*, void*, void*);
 using FindFileUseLinksFn = void*(WINAPI*)(void*, const void*, unsigned int);
